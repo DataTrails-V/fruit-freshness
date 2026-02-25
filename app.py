@@ -50,23 +50,30 @@ model = load_model()
 uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Bild anzeigen
+    # 1. Bild laden und sicherstellen, dass es RGB ist (wichtig für PNG!)
     image = Image.open(uploaded_file).convert('RGB')
+    
+    # 2. Bild anzeigen
     st.image(image, caption='Hochgeladenes Bild', use_container_width=True)
     
-    st.write("🔍 Analysiere...")
-    label = predict(image, model)
-    
-    # Ergebnis-Logik
-    is_rotten = "rotten" in label.lower()
-    
-    if is_rotten:
-        st.error(f"Ergebnis: {label}")
-        st.subheader("🇩🇪 Ergebnis: Das Obst ist 🔴 VERDORBEN")
-        st.subheader(f"🇺🇸 Result: The fruit is 🔴 ROTTEN")
-    else:
-        st.success(f"Ergebnis: {label}")
-        st.subheader("🇩🇪 Ergebnis: Das Obst ist 🟢 FRISCH")
-        st.subheader(f"🇺🇸 Result: The fruit is 🟢 FRESH")
-
-st.info("Hinweis: Dieses Modell nutzt MobileNetV3 für effiziente Echtzeit-Analyse.")
+    # 3. Button für die Analyse (hilft Streamlit, den State zu halten)
+    if st.button("Frische prüfen"):
+        with st.spinner("🔍 Analysiere..."):
+            label = predict(image, model)
+            
+            # Ergebnis-Logik
+            is_rotten = "rotten" in label.lower()
+            
+            # Trenne Namen vom Status für schönere Anzeige
+            display_name = label.replace("fresh", "").replace("rotten", "").capitalize()
+            
+            st.divider()
+            
+            if is_rotten:
+                st.error(f"Klassifizierung: {label}")
+                st.markdown(f"### 🇩🇪 Ergebnis: {display_name} ist 🔴 **VERDORBEN**")
+                st.markdown(f"### 🇺🇸 Result: {display_name} is 🔴 **ROTTEN**")
+            else:
+                st.success(f"Klassifizierung: {label}")
+                st.markdown(f"### 🇩🇪 Ergebnis: {display_name} ist 🟢 **FRISCH**")
+                st.markdown(f"### 🇺🇸 Result: {display_name} is 🟢 **FRESH**")
